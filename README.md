@@ -1,5 +1,7 @@
 # microsoft-sentinel
-Content for Microsoft Sentinel:
+*Content for Microsoft Sentinel*
+
+Here you can find:
 
 - Analytics rules for security detections
 - Playbooks for automated incident enrichment, reponse, an communication
