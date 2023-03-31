@@ -1,0 +1,82 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "workspace": {
+            "type": "String"
+        }
+    },
+    "resources": [
+        {
+            "id": "[concat(resourceId('Microsoft.OperationalInsights/workspaces/providers', parameters('workspace'), 'Microsoft.SecurityInsights'),'/alertRules/8d3890b8-6522-424b-a728-44b80d24cf43')]",
+            "name": "[concat(parameters('workspace'),'/Microsoft.SecurityInsights/8d3890b8-6522-424b-a728-44b80d24cf43')]",
+            "type": "Microsoft.OperationalInsights/workspaces/providers/alertRules",
+            "kind": "Scheduled",
+            "apiVersion": "2022-09-01-preview",
+            "properties": {
+                "displayName": "Suspicious Exchange Online access by unexpected IP",
+                "description": "This rule detects access to Exchange Online by IP addresses that are not included in the Approved IPs watchlist. This could indicate that an access token has been stolen and used by a malicious actor. \n\nIPs belonging to devices that are AAD joined or onboarded to Defender for Endpoint are excluded as these have other protection mechanisms in place that  can help detect and prevent anomalous behaviour.",
+                "severity": "Medium",
+                "enabled": true,
+                "query": "let starttime = 1d;\r\nlet watchlist = _GetWatchlist('approved-ips');\r\nOfficeActivity\r\n| where TimeGenerated between (ago(starttime)..now())\r\n| where OfficeWorkload == \"Exchange\"\r\n| where isnotempty(Client_IPAddress) \r\n// Correlate with DeviceInfo table from MDE and leave out any events from onboarded devices\r\n| join kind=leftanti DeviceInfo \r\non $left.Client_IPAddress == $right.PublicIP\r\n// Leave out events from approved IPs (specified in watchlist)\r\n| join kind=leftanti watchlist \r\non $left.Client_IPAddress == $right.SearchKey\r\n",
+                "queryFrequency": "P1D",
+                "queryPeriod": "P1D",
+                "triggerOperator": "GreaterThan",
+                "triggerThreshold": 0,
+                "suppressionDuration": "PT5H",
+                "suppressionEnabled": false,
+                "startTimeUtc": null,
+                "tactics": [
+                    "CredentialAccess"
+                ],
+                "techniques": [
+                    "T1528"
+                ],
+                "alertRuleTemplateName": null,
+                "incidentConfiguration": {
+                    "createIncident": true,
+                    "groupingConfiguration": {
+                        "enabled": true,
+                        "reopenClosedIncident": false,
+                        "lookbackDuration": "P1D",
+                        "matchingMethod": "Selected",
+                        "groupByEntities": [
+                            "IP"
+                        ],
+                        "groupByAlertDetails": [
+                            "DisplayName"
+                        ],
+                        "groupByCustomDetails": []
+                    }
+                },
+                "eventGroupingSettings": {
+                    "aggregationKind": "AlertPerResult"
+                },
+                "alertDetailsOverride": null,
+                "customDetails": null,
+                "entityMappings": [
+                    {
+                        "entityType": "IP",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Address",
+                                "columnName": "Client_IPAddress"
+                            }
+                        ]
+                    },
+                    {
+                        "entityType": "Account",
+                        "fieldMappings": [
+                            {
+                                "identifier": "Name",
+                                "columnName": "UserId"
+                            }
+                        ]
+                    }
+                ],
+                "sentinelEntitiesMappings": null,
+                "templateVersion": null
+            }
+        }
+    ]
+}
