@@ -1,5 +1,5 @@
 # microsoft-sentinel
-*Content for Microsoft Sentinel*
+**Content for Microsoft Sentinel**
 
 Here you can find:
 
